@@ -23,7 +23,6 @@ for (const folder of commandFolders) {
     }
 }
 
-// TODO - Understand below code
 
 // Construct and prepare an instance of the REST module
 const rest = new REST().setToken(token);

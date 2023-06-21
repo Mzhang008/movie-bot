@@ -21,61 +21,98 @@ module.exports = {
         const url = `https://api.themoviedb.org/3/search/movie?query=${movie}&include_adult=false&language=en-US&page=1`;
         const moviesData = await fetch(url, options);
         const moviesJson = await moviesData.json();
-        //const index = 0;
-        const movie1 = moviesJson["results"][0];
-        const movie2 = moviesJson["results"][1];
-        const movie3 = moviesJson["results"][2];
-        const movie4 = moviesJson["results"][3];
         
+        const movieArray = [];
+        const resultsTotal = moviesJson["results"].length;
+        const currentIndex = 0;
+
+        // handle cases of less than 4 results
+        let embedNum = () => {
+            if (resultsTotal < 4) {
+                return resultsTotal;
+            } else {
+                return 4;
+            }
+        };
+        
+        const pushMovie = (index) => { 
+            movieArray.push(moviesJson["results"][index]) 
+        }
+        //probably poorly written
+        const getMovies = () => {
+
+            let batch = embedNum();
+            for (let i = 0; i < batch; i ++) {
+                pushMovie(currentIndex + i);
+                
+            }
+            //currentIndex += batch; not needed here might be better as a separate function
+        }
+        getMovies();
+
+        // need to check if properties we want to use are populated
         const checkPoster = (movie) => {
-            if (!movie.poster_path) {
-                movie.poster_path = '';
+            if (movie.poster_path === undefined || movie.poster_path === null) {
+                return false;
+            } else {
+                return movie.poster_path;
             }
         }
-        checkPoster(movie1);
-        checkPoster(movie2);
-        checkPoster(movie3);
-        checkPoster(movie4);
+        
         
 
         const buildEmbed = (image) => new EmbedBuilder().setURL('https://discord.js.org/').setImage(image);
-        const embed1 = buildEmbed(`https://image.tmdb.org/t/p/w500${movie1.poster_path}`);
-        const embed2 = buildEmbed(`https://image.tmdb.org/t/p/w500${movie2.poster_path}`);
-        const embed3 = buildEmbed(`https://image.tmdb.org/t/p/w500${movie3.poster_path}`);
-        const embed4 = buildEmbed(`https://image.tmdb.org/t/p/w500${movie4.poster_path}`);
-        let embedMessage = await interaction.channel.send({embeds: [embed1, embed2, embed3, embed4]});
-        console.log(interaction);
-        console.log("--------------------------------------------");
-        console.log(embedMessage);
+        const createEmbedArray = (movieArray) => {
+            let result = [];
+            for (movies of movieArray) {
+                const embed = buildEmbed(`https://image.tmdb.org/t/p/w500${checkPoster(movies)}`);
+                result.push(embed);
+            }
+            return result;
+        }
+        const embedCollage = createEmbedArray(movieArray);
+
+        let embedMessage = await interaction.channel.send({embeds: embedCollage });    
+
+        const buildButton = (index, movie) => {
+            const button = new ButtonBuilder()
+                .setCustomId(`button${index}`)
+                .setLabel(`${movie.title} (${movie.release_date})`)
+                .setStyle(ButtonStyle.Primary);
+            return button;
+        }
+
+        let buttons = [];
+        const fillButtonsArray = () => {
+            let index = 1;
+            for (movies of movieArray) {
+                
+                buttons.push(buildButton(index, movies));
+                index++;
+            }};
+        fillButtonsArray();
+
+        //create the buttons
+
+        const row = new ActionRowBuilder();
+        for (button of buttons) {
+            row.addComponents(button);
+        }
         
-
-        const button1 = new ButtonBuilder()
-            .setCustomId('button1')
-            .setLabel(`${movie1.title} (${movie1.release_date})`)
-            .setStyle(ButtonStyle.Primary);
-        const button2 = new ButtonBuilder()
-            .setCustomId('button2')
-            .setLabel(`${movie2.title} (${movie2.release_date})`)
-            .setStyle(ButtonStyle.Primary);
-        const button3 = new ButtonBuilder()
-            .setCustomId('button3')
-            .setLabel(`${movie3.title} (${movie3.release_date})`)
-            .setStyle(ButtonStyle.Primary);
-        const button4 = new ButtonBuilder()
-            .setCustomId('button4')
-            .setLabel(`${movie4.title} (${movie4.release_date})`)
-            .setStyle(ButtonStyle.Primary);
-
-        const row = new ActionRowBuilder()
-            .addComponents(button1, button2, button3, button4);
-
+        // cancel button
+        const cancelButton = new ButtonBuilder()
+            .setCustomId('cancelButton')
+            .setLabel('Cancel')
+            .setStyle(ButtonStyle.Danger);
+        row.addComponents(cancelButton);
+    
         // response stores the InteractionResponse object from interaction.reply
         const response = await interaction.editReply({ 
             content: `Select a poster for ${movie}`,
             components: [row]
         });
         // collectorFilter is a boolean returning function, 
-        // in this case it is true if the component user and original interaction user are the same
+        // in this case it is true if the component user and original interaction user are the same (aka same person who typed the command and pressed the button)
         const collectorFilter = i => i.user.id === interaction.user.id;  
         
         try {           
@@ -84,23 +121,25 @@ module.exports = {
             const confirmation = await response.awaitMessageComponent({ filter: collectorFilter, time: 60000});
 
             if (confirmation.customId === 'button1') {
-                await embedMessage.edit({ embeds: [embed1]});
-                //await interaction.editReply({ content: `${movie1.title} selected https://image.tmdb.org/t/p/w500${movie1.poster_path}`, components: []});
+                await embedMessage.delete();
+                await interaction.channel.send({ embeds: [embedCollage[0]]});
             } else if (confirmation.customId === 'button2') {
-                await embedMessage.edit({ embeds: [embed2]});
-                //await interaction.editReply({ content: `${movie2.title} selected https://image.tmdb.org/t/p/w500${movie2.poster_path}`, components: []});
+                await embedMessage.delete();
+                await interaction.channel.send({ embeds: [embedCollage[1]]});
             } else if (confirmation.customId === 'button3') {
-                await embedMessage.edit({ embeds: [embed3]});
-                //await interaction.editReply({ content: `${movie3.title} selected https://image.tmdb.org/t/p/w500${movie3.poster_path}`, components: []});
+                await embedMessage.delete();
+                await interaction.channel.send({ embeds: [embedCollage[2]]});
             } else if (confirmation.customId === 'button4') {
-                await embedMessage.edit({ embeds: [embed4]});
-                //await interaction.editReply({ content: `${movie4.title} selected https://image.tmdb.org/t/p/w500${movie4.poster_path}`, components: []});
+                await embedMessage.delete();
+                await interaction.channel.send({ embeds: [embedCollage[3]]});
+            } else if (confirmation.customId === 'cancelButton') {
+                await embedMessage.delete();
             }
             await interaction.deleteReply();
-            //await embedMessage.delete();
         } catch (e) {
             console.error(e);
-            await interaction.editReply({ content: 'Confirmation not received within 1 minute, cancelling', components: []})
+            await embedMessage.delete();
+            await interaction.deleteReply();
         }
     },
 
