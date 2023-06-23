@@ -13,3 +13,4 @@ What I learned building the discord bot
 TODO
 - create button to display next 4 results, plan to use global current index
 - handle cases where the movie data exists but does not have a poster (use next and test as test cases)
+- handle movie titles that are >80 characters

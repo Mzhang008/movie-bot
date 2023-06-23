@@ -16,6 +16,7 @@ module.exports = {
     async execute(interaction) {
         
         const movie = interaction.options.getString('movie');
+        console.log(`Query: ${movie}`);
         await interaction.deferReply();
         // fetch movie poster
         const url = `https://api.themoviedb.org/3/search/movie?query=${movie}&include_adult=false&language=en-US&page=1`;
@@ -24,6 +25,13 @@ module.exports = {
         
         const movieArray = [];
         const resultsTotal = moviesJson["results"].length;
+        if (resultsTotal == 0 ) {
+            await interaction.editReply('no results for movies with that name')
+                .then(msg => {
+                    setTimeout(() => msg.delete(), 10000);
+                });
+        }
+
         const currentIndex = 0;
 
         // handle cases of less than 4 results
