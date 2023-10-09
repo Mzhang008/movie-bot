@@ -26,11 +26,11 @@ module.exports = {
         const movieArray = [];
         const resultsTotal = moviesJson["results"].length;
         if (resultsTotal == 0 ) {
-            await interaction.editReply('no results for movies with that name')
+            await interaction.editReply('no results for movies with that name, message will be deleted in a few seconds')
                 .then(msg => {
                     setTimeout(() => msg.delete(), 10000);
                 });
-        }
+        } else {
 
         const currentIndex = 0;
 
@@ -48,7 +48,7 @@ module.exports = {
         }
         //probably poorly written
         const getMovies = () => {
-
+            
             let batch = embedNum();
             for (let i = 0; i < batch; i ++) {
                 pushMovie(currentIndex + i);
@@ -78,14 +78,20 @@ module.exports = {
             }
             return result;
         }
+        //create array of movies
         const embedCollage = createEmbedArray(movieArray);
 
         let embedMessage = await interaction.channel.send({embeds: embedCollage });    
 
         const buildButton = (index, movie) => {
+            let label = movie.title;
+            console.log(label);
+            if (label.length > 80) {
+                label = label.slice(0, 60);
+            }
             const button = new ButtonBuilder()
                 .setCustomId(`button${index}`)
-                .setLabel(`${movie.title} (${movie.release_date})`)
+                .setLabel(`${label} (${movie.release_date})`)
                 .setStyle(ButtonStyle.Primary);
             return button;
         }
@@ -148,6 +154,7 @@ module.exports = {
             console.error(e);
             await embedMessage.delete();
             await interaction.deleteReply();
+        }
         }
     },
 
