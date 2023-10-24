@@ -2,6 +2,8 @@ movie-bot
 
 Use /movie to bring up prompt to enter movie title
 
+![Animation](https://github.com/Mzhang008/movie-bot/assets/71112589/464edd64-807d-4776-9f1d-df1a6f3451a6)
+
 What I learned building the discord bot
 - how to build a node.js application using discord.js, a Node.js library for the Discord API
 - how to use fs and path to generate filepaths 
